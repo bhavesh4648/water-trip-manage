@@ -1,14 +1,39 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react'
+import Layout from '@/components/Layout'
+import Dashboard from '@/components/Dashboard'
+import UploadOCR from '@/components/UploadOCR'
+import DeliveriesManagement from '@/components/DeliveriesManagement'
+import ClientsManagement from '@/components/ClientsManagement'
+import ReportsGenerator from '@/components/ReportsGenerator'
+import EmailManager from '@/components/EmailManager'
 
 const Index = () => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
-  );
-};
+  const [activeTab, setActiveTab] = useState('dashboard')
 
-export default Index;
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <Dashboard onNavigate={setActiveTab} />
+      case 'upload':
+        return <UploadOCR />
+      case 'deliveries':
+        return <DeliveriesManagement />
+      case 'clients':
+        return <ClientsManagement />
+      case 'reports':
+        return <ReportsGenerator />
+      case 'email':
+        return <EmailManager />
+      default:
+        return <Dashboard onNavigate={setActiveTab} />
+    }
+  }
+
+  return (
+    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+      {renderContent()}
+    </Layout>
+  )
+}
+
+export default Index
