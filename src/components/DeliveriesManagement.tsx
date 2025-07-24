@@ -86,7 +86,20 @@ const DeliveriesManagement = () => {
       }
     ]
     setDeliveries(mockDeliveries)
-  }, [])
+
+    // Listen for OCR added deliveries
+    const handleDeliveriesAdded = (event: CustomEvent) => {
+      const newDeliveries = event.detail
+      setDeliveries(prev => [...newDeliveries, ...prev])
+      toast({
+        title: "OCR Deliveries Added",
+        description: `${newDeliveries.length} entries added from logbook`,
+      })
+    }
+
+    window.addEventListener('deliveriesAdded', handleDeliveriesAdded as EventListener)
+    return () => window.removeEventListener('deliveriesAdded', handleDeliveriesAdded as EventListener)
+  }, [toast])
 
   const filteredDeliveries = deliveries.filter(delivery =>
     delivery.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
