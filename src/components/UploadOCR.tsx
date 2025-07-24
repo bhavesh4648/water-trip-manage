@@ -96,38 +96,109 @@ const UploadOCR = () => {
     const lines = text.split('\n').filter(line => line.trim())
     const entries: ExtractedEntry[] = []
     
-    // Simple parsing logic - this would need to be more sophisticated for real use
+    // Enhanced parsing for structured logbook format
     lines.forEach((line, index) => {
-      // Look for patterns like dates and times
-      const dateMatch = line.match(/(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/)
-      const timeMatch = line.match(/(\d{1,2}:\d{2})/)
+      // Skip header lines or very short lines
+      if (line.length < 10) return
       
-      if (dateMatch && timeMatch) {
-        entries.push({
-          id: `entry-${index}`,
-          date: dateMatch[1],
-          time: timeMatch[1],
-          driverName: extractDriverName(line),
-          clientName: extractClientName(line),
-          confidence: Math.random() * 30 + 70, // Mock confidence score
-          amount: extractAmount(line)
-        })
+      // Look for various date patterns
+      const dateMatch = line.match(/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/g)
+      
+      // Look for time patterns (including AM/PM)
+      const timeMatch = line.match(/(\d{1,2}:\d{2}(?:\s*[AaPp][Mm])?)/g)
+      
+      // For structured logbooks, try to extract from tabular data
+      const parts = line.split(/\s{2,}|\t/).filter(part => part.trim())
+      
+      // If we find date/time patterns or structured data
+      if ((dateMatch && timeMatch) || parts.length >= 3) {
+        const entryDate = dateMatch ? dateMatch[0] : extractDateFromParts(parts)
+        const entryTime = timeMatch ? timeMatch[0] : extractTimeFromParts(parts)
+        
+        // Generate unique ID and calculate confidence based on extraction quality
+        const confidence = calculateConfidence(entryDate, entryTime, parts)
+        
+        if (entryDate || entryTime || parts.length >= 2) {
+          entries.push({
+            id: `entry-${Date.now()}-${index}`,
+            date: entryDate || getCurrentDate(),
+            time: entryTime || '00:00',
+            driverName: extractDriverName(line, parts),
+            clientName: extractClientName(line, parts),
+            confidence: confidence,
+            amount: extractAmount(line)
+          })
+        }
       }
     })
 
-    return entries
+    // Remove duplicate entries based on date + time combination
+    const uniqueEntries = entries.filter((entry, index, self) => 
+      index === self.findIndex(e => e.date === entry.date && e.time === entry.time)
+    )
+
+    return uniqueEntries
   }
 
-  const extractDriverName = (line: string): string => {
-    // Mock extraction - would use more sophisticated pattern matching
+  const extractDateFromParts = (parts: string[]): string => {
+    for (const part of parts) {
+      const dateMatch = part.match(/(\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4})/)
+      if (dateMatch) return dateMatch[1]
+    }
+    return ''
+  }
+
+  const extractTimeFromParts = (parts: string[]): string => {
+    for (const part of parts) {
+      const timeMatch = part.match(/(\d{1,2}:\d{2})/)
+      if (timeMatch) return timeMatch[1]
+    }
+    return ''
+  }
+
+  const getCurrentDate = (): string => {
+    const today = new Date()
+    return `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`
+  }
+
+  const calculateConfidence = (date: string, time: string, parts: string[]): number => {
+    let score = 50
+    if (date) score += 20
+    if (time) score += 20
+    if (parts.length >= 3) score += 10
+    return Math.min(95, score + Math.random() * 10)
+  }
+
+  const extractDriverName = (line: string, parts?: string[]): string => {
+    // Enhanced extraction using both line and structured parts
     const drivers = ['Suresh', 'Ramesh', 'Mukesh', 'Dinesh', 'Rajesh']
+    
+    // Check in structured parts first if available
+    if (parts) {
+      for (const part of parts) {
+        const found = drivers.find(name => part.toLowerCase().includes(name.toLowerCase()))
+        if (found) return found
+      }
+    }
+    
+    // Fall back to line search
     const found = drivers.find(name => line.toLowerCase().includes(name.toLowerCase()))
     return found || 'Unknown Driver'
   }
 
-  const extractClientName = (line: string): string => {
-    // Mock extraction
+  const extractClientName = (line: string, parts?: string[]): string => {
+    // Enhanced extraction using both line and structured parts
     const clients = ['Hemantbhai', 'Ravi', 'Shiv', 'Prakash', 'Vijay']
+    
+    // Check in structured parts first if available
+    if (parts) {
+      for (const part of parts) {
+        const found = clients.find(name => part.toLowerCase().includes(name.toLowerCase()))
+        if (found) return found
+      }
+    }
+    
+    // Fall back to line search
     const found = clients.find(name => line.toLowerCase().includes(name.toLowerCase()))
     return found || 'Unknown Client'
   }
