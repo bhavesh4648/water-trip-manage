@@ -19,7 +19,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold text-ocean-deep mb-2">Welcome to AquaFlow</h1>
+        <h1 className="text-4xl font-bold text-ocean-deep mb-2">Welcome to KeiYaShiv</h1>
         <p className="text-lg text-ocean">Professional Water Supply Management System</p>
       </div>
 
